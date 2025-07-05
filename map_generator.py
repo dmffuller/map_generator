@@ -13,67 +13,61 @@ y1 = 0
 x2 = 10
 y2 = 10
 length = 10
-grid = [] # Populate with dictionary of posx, posy
+grid = {} # Populate with dictionary of posx, posy
 
 
 
 
 def generate_grid():
     """Generates the grid"""
-    global x1, x2, y1, y2
-    gridx = 1
-    gridy = 1
-    while True:
-        canvas.create_rectangle(x1, y1, x2, y2, fill="white", outline="black") # Adds a blank square in grid
-        grid.append({"gridx": gridx, "gridy": gridy, "status": "empty"})
-        x1 += length
-        x2 += length
-        gridx += 1
-
-        if x2 == 1010:
-            x1 = 0
-            x2 = 10
-            y1 += length
-            y2 += length
-            gridx = 1
-            gridy += 1
-
-        if y2 == 1010:
-            break
+    for y in range(1, 101):
+        for x in range(1, 101):
+            grid[(x, y)] = {"status": "empty"}
+            canvas.create_rectangle(
+                (x - 1) * 10,
+                (y - 1) * 10,
+                x * 10,
+                y * 10,
+                fill="white",
+                outline="black"
+            )
 
 
 def create_grass(generations):
     """Creates Random Grass"""
     global x1, x2, y1, y2
 
-    while generations != 0:  
-        posx = randint(1, 100)
-        posy = randint(1, 100)
-        x1 = posx * 10
-        y1 = posy * 10
-        x2 = x1 + length
-        y2 = y1 + length
-        canvas.create_rectangle(x1, y1, x2, y2, fill="green", outline="black")
-        generations -= 1
+    while generations > 0: # Loop through set generations
+        gx = randint(1, 100)
+        gy = randint(1,100)
+        status = check_status(gx, gy)
 
-        for cell in grid:
-            if cell["gridx"] == posx and cell["gridy"] == posy:
-                cell["status"] = "grass"
+        if status == "empty": # Only set status on empty cells
+            # Change the status
+            if (gx, gy) in grid:
+                grid[(gx, gy)]["status"] = "grass"
 
-        if generations == 0:
-            break
+                # Draw the grass cell:
+                canvas.create_rectangle(
+                    (gx - 1) * 10,
+                    (gy - 1) * 10,
+                    gx * 10,
+                    gy * 10,
+                    fill="green",
+                    outline="black"
+                )
+
+                generations -= 1
 
 
-def check_grid(posx, posy): # may not be needed
+
+def check_status(gx, gy): # may not be needed
     """Converts position to grid to check list of dictionary"""
-    gridx = posx // 10
-    gridy = posy // 10
-    return gridx, gridy
+    return grid.get((gx, gy), {}).get("status")
 
+generate_grid() # Create the grid
+create_grass(5000) # Popu;ate with grass
 
-generate_grid()
-create_grass(100)
-print(grid)
 
 
 
