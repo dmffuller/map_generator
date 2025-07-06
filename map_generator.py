@@ -7,12 +7,6 @@ root.title("Map Generator")
 canvas = Canvas(root, width=1000, height=1000, bg="white")
 canvas.pack()
 
-# Variable Init
-x1 = 0
-y1 = 0
-x2 = 10
-y2 = 10
-length = 10
 grid = {} # Populate with dictionary of posx, posy
 
 
@@ -34,41 +28,62 @@ def generate_grid():
 
 
 def create_grass(generations):
-    """Creates Random Grass"""
-    global x1, x2, y1, y2
+    """Creates Random Grass and fills adjacent empty tiles."""
+    max_attempts = generations * 10
+    attempts = 0
 
-    while generations > 0: # Loop through set generations
+    while generations > 0 and attempts < max_attempts:
         gx = randint(1, 100)
-        gy = randint(1,100)
+        gy = randint(1, 100)
+        attempts += 1
         status = check_status(gx, gy)
 
-        if status == "empty": # Only set status on empty cells
-            # Change the status
-            if (gx, gy) in grid:
-                grid[(gx, gy)]["status"] = "grass"
+        if status == "empty":
+            add_grass_and_adjacent(gx, gy)
+            generations -= 1
 
-                # Draw the grass cell:
-                canvas.create_rectangle(
-                    (gx - 1) * 10,
-                    (gy - 1) * 10,
-                    gx * 10,
-                    gy * 10,
-                    fill="green",
-                    outline="black"
-                )
+def add_grass_and_adjacent(x, y):
+    """Sets grass at (x, y) and fills empty adjacent tiles with grass."""
+    directions = [(-1,0), (1,0), (0,-1), (0,1)]  # left, right, up, down
 
-                generations -= 1
+    def set_grass(gx, gy):
+        if (gx, gy) in grid and grid[(gx, gy)]["status"] == "empty":
+            grid[(gx, gy)]["status"] = "grass"
+            canvas.create_rectangle(
+                (gx - 1) * 10,
+                (gy - 1) * 10,
+                gx * 10,
+                gy * 10,
+                fill="green",
+                outline="black"
+            )
 
+    set_grass(x, y)
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        set_grass(nx, ny)
 
+def fill_empty_with_water():
+    """Fills every remaining empty cell with water"""
+    for (x, y), data in grid.items():
+        if data["status"] == "empty":
+            grid[(x, y)]["status"] = "water"
+            canvas.create_rectangle(
+                (x - 1) * 10,
+                (y - 1) * 10,
+                x * 10,
+                y * 10,
+                fill="blue",
+                outline="black"
+            )
 
 def check_status(gx, gy): # may not be needed
     """Converts position to grid to check list of dictionary"""
     return grid.get((gx, gy), {}).get("status")
 
 generate_grid() # Create the grid
-create_grass(5000) # Popu;ate with grass
-
-
+create_grass(2000) # Populate with grass
+fill_empty_with_water()  # Fill remaining empty cells with water
 
 
 
