@@ -8,9 +8,8 @@ canvas = Canvas(root, width=1000, height=1000, bg="white")
 canvas.pack()
 
 grid = {} # Populate with dictionary of posx, posy
-
-
-
+clicks = 1
+infection_queue = []
 
 def generate_grid():
     """Generates the grid"""
@@ -26,6 +25,54 @@ def generate_grid():
                 outline="black"
             )
 
+def get_mouse_pos(event):
+    """gets mouse position as pixels and cell"""
+    x = event.x
+    gx = x // 10 + 1
+    y = event.y
+    gy = y // 10 + 1
+    print(f"Mouse clicked at x:{x}, y:{y}")
+    print(f"Cell ({gx}, {gy})")
+    set_infection(gx, gy)
+
+def set_infection(gx, gy):
+    """Sets clicked point as infection"""
+    global clicks
+    if (gx, gy) in grid and grid[(gx, gy)]["status"] == "grass" and clicks > 0:
+        grid[(gx, gy)]["status"] = "infection"
+        canvas.create_rectangle(
+            (gx - 1) * 10,
+            (gy - 1) * 10,
+            gx * 10,
+            gy * 10,
+            fill="red",
+            outline="black"
+        )
+        clicks -= 1
+        infection_queue.append((gx, gy))
+        spread_infection()
+    else:
+        print("No clicks remain")           
+
+def spread_infection():
+    """Spreads the infection to nearby blocks"""
+    if not infection_queue:
+        return  # done!
+
+    gx, gy = infection_queue.pop(0)
+    directions = [(-1,0), (1,0), (0,-1), (0,1)]
+
+    for dx, dy in directions:
+        nx, ny = gx + dx, gy + dy
+        if (nx, ny) in grid and grid[(nx, ny)]["status"] == "grass":
+            grid[(nx, ny)]["status"] = "infection"
+            canvas.create_rectangle(
+                (nx - 1) * 10, (ny - 1) * 10, nx * 10, ny * 10,
+                fill="red", outline="black"
+            )
+            infection_queue.append((nx, ny))
+
+    root.after(2, spread_infection)  # wait 0.1 sec
 
 def create_grass(generations):
     """Creates Random Grass and fills adjacent empty tiles."""
@@ -86,7 +133,7 @@ create_grass(2000) # Populate with grass
 fill_empty_with_water()  # Fill remaining empty cells with water
 
 
-
+root.bind("<Button-1>", get_mouse_pos)
 
 # Start the window
 root.mainloop()
